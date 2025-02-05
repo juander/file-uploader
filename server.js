@@ -6,7 +6,6 @@ const fs = require('fs');
 const { unlink } = require('fs');
 const helmet = require('helmet');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const morgan = require('morgan');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
@@ -21,9 +20,13 @@ if (!SECRET_KEY) {
 }
 
 // Middlewares
-app.set('trust proxy', true); // Confia nos cabeçalhos de proxy
+app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']); // Configuração segura para o Render
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: 'https://file-uploader-t76a.onrender.com', // Substitua pelo domínio do seu front-end
+  methods: ['GET', 'POST', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.static('public'));
@@ -66,7 +69,7 @@ const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
-  // Verificação básica das credenciais
+  // Verificação básica das credenciais (sem banco de dados)
   if (username === 'admin' && password === 'admin123') {
     const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
     res.json({ token });

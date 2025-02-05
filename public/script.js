@@ -3,7 +3,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
   
     const token = localStorage.getItem('token');
     if (!token) {
-      window.location.href = 'login.html'; // Redireciona para a página de login
+      window.location.href = 'login.html';
       return;
     }
   
@@ -30,13 +30,13 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
   
       if (!response.ok) {
         const errorMessage = await response.text();
-        throw new Error(errorMessage || 'Erro ao enviar o arquivo');
+        throw new Error(errorMessage || 'Erro ao enviar o arquivo. Tente novamente mais tarde.');
       }
   
       const message = await response.text();
       showMessage(message, 'success');
       fileInput.value = '';
-      await loadFiles(); // Recarrega a lista de arquivos após o upload
+      await loadFiles();
     } catch (err) {
       console.error('Erro no upload:', err);
       showMessage(err.message || 'Erro ao enviar o arquivo', 'error');
@@ -101,7 +101,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
   
             const deleteMessage = await deleteResponse.text();
             showMessage(deleteMessage, 'success');
-            await loadFiles(); // Recarrega a lista de arquivos após a exclusão
+            await loadFiles();
           } catch (err) {
             console.error('Erro ao excluir arquivo:', err);
             showMessage(err.message || 'Erro ao excluir o arquivo', 'error');

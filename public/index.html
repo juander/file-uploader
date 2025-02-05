@@ -32,6 +32,25 @@
     if (!token) {
       window.location.href = 'login.html'; // Redireciona para a página de login
     }
+
+    // Área de arrastar e soltar
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('file-input');
+
+    dropArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropArea.classList.add('highlight');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+      dropArea.classList.remove('highlight');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('highlight');
+      fileInput.files = e.dataTransfer.files;
+    });
   </script>
   <script src="script.js"></script>
 </body>
