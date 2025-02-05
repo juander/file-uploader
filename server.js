@@ -92,12 +92,27 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Rota de Upload de Arquivo
-app.post('/upload', authenticateToken, upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Nenhum arquivo enviado ou tipo de arquivo não suportado' });
-  }
-  res.json({ message: 'Arquivo enviado com sucesso!', file: req.file });
-});
+app.post('/upload', authenticateToken, (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+      if (err) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ error: 'O arquivo excede o limite de 5MB' });
+        }
+        if (err.message === 'Tipo de arquivo não suportado!') {
+          return res.status(400).json({ error: 'Tipo de arquivo não suportado' });
+        }
+        if (err.code === 'Unexpected field') {
+          return res.status(400).json({ error: 'O campo do arquivo deve ser chamado "file"' });
+        }
+        console.error('Erro no upload:', err); // Log do erro no console
+        return res.status(500).json({ error: 'Erro ao processar o arquivo' });
+      }
+      if (!req.file) {
+        return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+      }
+      res.json({ message: 'Arquivo enviado com sucesso!', file: req.file });
+    });
+  });
 
 // Rota para Listar Arquivos
 app.get('/files', authenticateToken, (req, res) => {
