@@ -23,10 +23,11 @@ if (!SECRET_KEY) {
 app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']); // Configuração segura para o Render
 app.use(helmet());
 app.use(cors({
-  origin: 'https://file-uploader-t76a.onrender.com', // Substitua pelo domínio do seu front-end
-  methods: ['GET', 'POST', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+    origin: 'https://file-uploader-t76a.onrender.com', 
+    methods: ['GET', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true, // Permite cookies e cabeçalhos de autenticação
+  }));
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.static('public'));
