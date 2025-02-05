@@ -1,37 +1,4 @@
-body {
-    font-family: Arial, sans-serif;
-    max-width: 600px;
-    margin: 20px auto;
-    text-align: center;
+#drop-area.highlight {
+  border-color: #007BFF;
+  background-color: #f0f8ff;
 }
-
-input {
-  margin: 10px 0;
-}
-
-.upload-btn {
-  background-color: #007BFF;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  cursor: pointer;
-}
-
-.upload-btn:hover {
-  background-color: #0056b3;
-}
-
-.delete-btn {
-  margin-left: 5px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.delete-btn:hover {
-  background-color: #c82333;
-}
-
-  

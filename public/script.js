@@ -7,69 +7,81 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
   
+    const loading = document.getElementById('loading');
+    loading.classList.remove('d-none');
+  
     try {
+      const token = localStorage.getItem('token'); // Obtenha o token do localStorage
       const response = await fetch('/upload', {
         method: 'POST',
         body: formData,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
   
       const message = await response.text();
       document.getElementById('message').innerText = message;
   
-      // Reseta o campo de arquivo
-      fileInput.value = ''; // Faz com que o texto volte a ser "Nenhum arquivo escolhido"
-  
-      loadFiles(); // Atualiza a lista de arquivos disponíveis
+      fileInput.value = '';
+      loadFiles();
     } catch (err) {
       console.error(err);
+    } finally {
+      loading.classList.add('d-none');
     }
   });
   
   async function loadFiles() {
     const fileList = document.getElementById('file-list');
-    fileList.innerHTML = ''; // Limpa a lista de arquivos antes de recarregar
+    fileList.innerHTML = '';
   
     try {
-      const response = await fetch('/files'); // Faz a requisição à API para obter a lista de arquivos
+      const token = localStorage.getItem('token'); // Obtenha o token do localStorage
+      const response = await fetch('/files', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       if (!response.ok) throw new Error('Erro ao carregar arquivos');
   
-      const files = await response.json(); // Converte a resposta para JSON
+      const files = await response.json();
   
       files.forEach(file => {
         const li = document.createElement('li');
+        li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
   
-        // Adiciona um link para o arquivo
         const link = document.createElement('a');
         link.href = `/uploads/${file}`;
         link.textContent = file;
-        link.target = '_blank'; // Abre o arquivo em uma nova aba
+        link.target = '_blank';
   
-        // Adiciona o botão de deletar com classe específica
         const deleteButton = document.createElement('button');
         deleteButton.textContent = 'Excluir';
-        deleteButton.classList.add('delete-btn'); // Adiciona a classe específica para o botão de deletar
+        deleteButton.classList.add('btn', 'btn-danger', 'btn-sm');
         deleteButton.addEventListener('click', async () => {
           try {
             const deleteResponse = await fetch(`/delete/${file}`, {
               method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
             });
             const deleteMessage = await deleteResponse.text();
             alert(deleteMessage);
-            loadFiles(); // Recarrega a lista após exclusão
+            loadFiles();
           } catch (err) {
             console.error('Erro ao excluir arquivo:', err);
           }
         });
   
-        li.appendChild(link); // Adiciona o link na lista
-        li.appendChild(deleteButton); // Adiciona o botão de exclusão na lista
-        fileList.appendChild(li); // Adiciona o item à lista
+        li.appendChild(link);
+        li.appendChild(deleteButton);
+        fileList.appendChild(li);
       });
     } catch (err) {
       console.error('Erro ao carregar a lista de arquivos:', err);
     }
   }
   
-  // Chama a função para carregar os arquivos ao abrir a página
   loadFiles();
-  
