@@ -1,12 +1,16 @@
 async function isPasswordLeaked(password) {
-  const hash = await sha1(password); // Gera o hash SHA-1 da senha
-  const prefix = hash.slice(0, 5); // Pega os primeiros 5 caracteres do hash
+  const hash = await sha1(password);
+  const prefix = hash.slice(0, 5);
   const suffix = hash.slice(5).toUpperCase();
 
-  const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
-  const data = await response.text();
-
-  return data.includes(suffix);
+  try {
+    const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+    const data = await response.text();
+    return data.includes(suffix);
+  } catch (error) {
+    console.error('Erro ao verificar senha vazada:', error);
+    return false; // Ignora erros na verificação de senhas vazadas
+  }
 }
 
 async function sha1(message) {
@@ -23,17 +27,10 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
 
-  console.log('Tentativa de login:', { username, password }); // Log da tentativa de login
+  console.log('Tentativa de login:', { username, password });
 
   if (!username || !password) {
     showMessage('Por favor, preencha todos os campos.', 'error');
-    return;
-  }
-
-  // Verifica se a senha foi vazada
-  const isLeaked = await isPasswordLeaked(password);
-  if (isLeaked) {
-    showMessage('Esta senha foi vazada em violações de dados. Escolha uma senha mais segura.', 'error');
     return;
   }
 
@@ -42,6 +39,18 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   loginButton.textContent = 'Carregando...';
 
   try {
+    // Verifica se a senha foi vazada (com timeout)
+    const isLeaked = await Promise.race([
+      isPasswordLeaked(password),
+      new Promise((resolve) => setTimeout(() => resolve(false), 3000)),
+    ]);
+
+    if (isLeaked) {
+      showMessage('Esta senha foi vazada em violações de dados. Escolha uma senha mais segura.', 'error');
+      return;
+    }
+
+    // Envia a requisição de login
     const response = await fetch('/login', {
       method: 'POST',
       headers: {
@@ -50,7 +59,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       body: JSON.stringify({ username, password }),
     });
 
-    console.log('Resposta do servidor:', response); // Log da resposta
+    console.log('Resposta do servidor:', response);
 
     if (!response.ok) {
       const errorMessage = await response.text();
@@ -58,10 +67,12 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     }
 
     const data = await response.json();
+    console.log('Dados recebidos:', data);
+
     if (data.token) {
-      sessionStorage.setItem('token', data.token); // Armazena o token no sessionStorage
-      console.log('Token armazenado:', data.token); // Log do token armazenado
-      window.location.href = 'index.html';
+      localStorage.setItem('token', data.token); // Armazena o token no localStorage
+      console.log('Token armazenado:', data.token);
+      window.location.href = '/index.html'; // Redireciona para a página inicial
     } else {
       throw new Error('Token não recebido do servidor');
     }
