@@ -1,39 +1,44 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const helmet = require('helmet'); // Segurança
 
 const app = express();
-const port = 3000;
 
-// Configurar a pasta de uploads
+app.use(helmet());
+app.use(express.static('public'));
+
+// Configuração do armazenamento
 const storage = multer.diskStorage({
-  destination: 'uploads/',
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
+    cb(null, file.originalname);
+  },
 });
 
-const upload = multer({ storage });
+// Filtro para tipos de arquivos permitidos
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Tipo de arquivo não suportado!'));
+  }
+};
 
-// Servir arquivos estáticos da pasta "public"
-app.use(express.static(path.join(__dirname, 'public')));
+// Configurar o upload com filtro
+const upload = multer({ storage, fileFilter });
 
-// Endpoint para upload de arquivos
 app.post('/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).send('Nenhum arquivo enviado!');
-  }
-  res.send(`Arquivo enviado com sucesso: ${req.file.originalname}`);
+  res.send('Arquivo enviado com sucesso!');
 });
 
-// Rota para listar arquivos disponíveis
 app.get('/files', (req, res) => {
-  const fs = require('fs');
-  const files = fs.readdirSync(path.join(__dirname, 'uploads'));
-  res.json(files);
+  res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// Iniciar o servidor
-app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+app.listen(3000, () => {
+  console.log('Servidor rodando em http://localhost:3000');
 });
