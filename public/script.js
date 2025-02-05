@@ -12,9 +12,14 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
         method: 'POST',
         body: formData,
       });
+  
       const message = await response.text();
       document.getElementById('message').innerText = message;
-      loadFiles();
+  
+      // Reseta o campo de arquivo
+      fileInput.value = ''; // Faz com que o texto volte a ser "Nenhum arquivo escolhido"
+  
+      loadFiles(); // Atualiza a lista de arquivos disponíveis
     } catch (err) {
       console.error(err);
     }
@@ -25,7 +30,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     fileList.innerHTML = ''; // Limpa a lista de arquivos antes de recarregar
   
     try {
-      const response = await fetch('/files'); // Faz a requisição à API
+      const response = await fetch('/files'); // Faz a requisição à API para obter a lista de arquivos
       if (!response.ok) throw new Error('Erro ao carregar arquivos');
   
       const files = await response.json(); // Converte a resposta para JSON
@@ -39,7 +44,25 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
         link.textContent = file;
         link.target = '_blank'; // Abre o arquivo em uma nova aba
   
-        li.appendChild(link);
+        // Adiciona o botão de deletar com classe específica
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Excluir';
+        deleteButton.classList.add('delete-btn'); // Adiciona a classe específica para o botão de deletar
+        deleteButton.addEventListener('click', async () => {
+          try {
+            const deleteResponse = await fetch(`/delete/${file}`, {
+              method: 'DELETE',
+            });
+            const deleteMessage = await deleteResponse.text();
+            alert(deleteMessage);
+            loadFiles(); // Recarrega a lista após exclusão
+          } catch (err) {
+            console.error('Erro ao excluir arquivo:', err);
+          }
+        });
+  
+        li.appendChild(link); // Adiciona o link na lista
+        li.appendChild(deleteButton); // Adiciona o botão de exclusão na lista
         fileList.appendChild(li); // Adiciona o item à lista
       });
     } catch (err) {
@@ -49,5 +72,4 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
   
   // Chama a função para carregar os arquivos ao abrir a página
   loadFiles();
-  
   

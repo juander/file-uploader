@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { unlink } = require('fs');
 const helmet = require('helmet'); // Segurança
 
 const app = express();
@@ -52,6 +53,20 @@ app.get('/files', (req, res) => {
   });
 });
 
+// Rota para deletar um arquivo
+app.delete('/delete/:filename', (req, res) => {
+    const { filename } = req.params;
+    const filePath = path.join(__dirname, 'uploads', filename);
+  
+    unlink(filePath, (err) => {
+      if (err) {
+        console.error(`Erro ao deletar arquivo ${filename}:`, err);
+        return res.status(500).send('Erro ao deletar o arquivo');
+      }
+      res.send('Arquivo deletado com sucesso!');
+    });
+  });
+  
 // Porta dinâmica para compatibilidade com o Render
 const PORT = process.env.PORT || 3000;
 

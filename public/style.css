@@ -3,18 +3,35 @@ body {
     max-width: 600px;
     margin: 20px auto;
     text-align: center;
-  }
-  input {
-    margin: 10px 0;
-  }
-  button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-  }
-  button:hover {
-    background-color: #0056b3;
-  }
+}
+
+input {
+  margin: 10px 0;
+}
+
+.upload-btn {
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+}
+
+.upload-btn:hover {
+  background-color: #0056b3;
+}
+
+.delete-btn {
+  margin-left: 5px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
+}
+
   
