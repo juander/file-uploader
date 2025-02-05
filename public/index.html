@@ -28,10 +28,12 @@
   </div>
   <script>
     // Verifica se o usuário está logado
+    document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     if (!token) {
       window.location.href = 'login.html'; // Redireciona para a página de login
     }
+  });
 
     // Área de arrastar e soltar
     const dropArea = document.getElementById('drop-area');
