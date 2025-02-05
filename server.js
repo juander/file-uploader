@@ -12,15 +12,22 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+
+// Verifica se a SECRET_KEY está definida
 const SECRET_KEY = process.env.SECRET_KEY;
+if (!SECRET_KEY) {
+  console.error('Erro: SECRET_KEY não definida.');
+  process.exit(1);
+}
 
 // Middlewares
-app.use(helmet()); // Adiciona headers de segurança
-app.use(cors()); // Habilita CORS
-app.use(morgan('combined')); // Logs de requisições
-app.use(express.json()); // Interpreta o corpo das requisições como JSON
-app.use(express.static('public')); // Servir arquivos estáticos da pasta 'public'
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Servir arquivos da pasta 'uploads'
+app.set('trust proxy', true); // Confia nos cabeçalhos de proxy
+app.use(helmet());
+app.use(cors());
+app.use(morgan('combined'));
+app.use(express.json());
+app.use(express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rate Limiting
 const limiter = rateLimit({
