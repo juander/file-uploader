@@ -23,6 +23,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
 
+  console.log('Tentativa de login:', { username, password }); // Log da tentativa de login
+
   if (!username || !password) {
     showMessage('Por favor, preencha todos os campos.', 'error');
     return;
@@ -48,6 +50,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       body: JSON.stringify({ username, password }),
     });
 
+    console.log('Resposta do servidor:', response); // Log da resposta
+
     if (!response.ok) {
       const errorMessage = await response.text();
       throw new Error(errorMessage || 'Erro ao fazer login');
@@ -55,7 +59,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
     const data = await response.json();
     if (data.token) {
-      sessionStorage.setItem('token', data.token); // Usa sessionStorage em vez de localStorage
+      sessionStorage.setItem('token', data.token); // Armazena o token no sessionStorage
+      console.log('Token armazenado:', data.token); // Log do token armazenado
       window.location.href = 'index.html';
     } else {
       throw new Error('Token não recebido do servidor');

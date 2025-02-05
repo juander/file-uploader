@@ -68,16 +68,20 @@ const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024
 
 // Rota de Login
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-
-  // Verificação básica das credenciais (sem banco de dados)
-  if (username === 'usuarioSeguro' && password === 'SenhaForte2025') {
-    const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
-    res.json({ token });
-  } else {
-    res.status(401).json({ error: 'Credenciais inválidas' });
-  }
-});
+    const { username, password } = req.body;
+  
+    console.log('Requisição de login recebida:', { username, password }); // Log da requisição
+  
+    // Verificação básica das credenciais (sem banco de dados)
+    if (username === 'admin' && password === 'admin123') {
+      const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
+      console.log('Login bem-sucedido. Token gerado:', token); // Log do token
+      res.json({ token });
+    } else {
+      console.log('Credenciais inválidas:', { username, password }); // Log de credenciais inválidas
+      res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+  });
 
 // Middleware de Autenticação
 const authenticateToken = (req, res, next) => {

@@ -28,10 +28,17 @@
   </div>
   <script>
     // Verifica se o usuário está logado
-    const token = sessionStorage.getItem('token');
-    if (!token) {
-      window.location.href = 'login.html';
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = sessionStorage.getItem('token'); // Verifica o token no sessionStorage
+      console.log('Token recuperado:', token); // Log do token recuperado
+      if (!token) {
+        window.location.href = 'login.html'; // Redireciona para a página de login se o token não existir
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+    sessionStorage.removeItem('token'); // Remove o token ao fechar a aba
+    });
 
     // Área de arrastar e soltar
     const dropArea = document.getElementById('drop-area');
