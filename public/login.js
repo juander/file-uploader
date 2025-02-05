@@ -27,9 +27,13 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       throw new Error(errorMessage || 'Erro ao fazer login');
     }
 
-    const { token } = await response.json();
-    localStorage.setItem('token', token);
-    window.location.href = 'index.html';
+    const data = await response.json();
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      window.location.href = 'index.html';
+    } else {
+      throw new Error('Token não recebido do servidor');
+    }
   } catch (err) {
     console.error('Erro no login:', err);
     showMessage(err.message || 'Erro ao fazer login', 'error');

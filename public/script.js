@@ -49,12 +49,14 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     const fileList = document.getElementById('file-list');
     fileList.innerHTML = '';
   
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showMessage('Token de autenticação não encontrado. Faça login novamente.', 'error');
+      window.location.href = 'login.html'; // Redireciona para a página de login
+      return;
+    }
+  
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        showMessage('Token de autenticação não encontrado. Faça login novamente.', 'error');
-        return;
-      }
   
       const response = await fetch('/files', {
         headers: {
