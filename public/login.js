@@ -55,7 +55,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
     const data = await response.json();
     if (data.token) {
-      localStorage.setItem('token', data.token);
+      sessionStorage.setItem('token', data.token); // Usa sessionStorage em vez de localStorage
       window.location.href = 'index.html';
     } else {
       throw new Error('Token não recebido do servidor');
