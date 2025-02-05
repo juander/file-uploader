@@ -70,7 +70,7 @@ app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
   // Verificação básica das credenciais (sem banco de dados)
-  if (username === 'admin' && password === 'admin123') {
+  if (username === 'usuarioSeguro' && password === 'SenhaForte2025') {
     const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
     res.json({ token });
   } else {

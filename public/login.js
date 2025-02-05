@@ -1,3 +1,22 @@
+async function isPasswordLeaked(password) {
+  const hash = await sha1(password); // Gera o hash SHA-1 da senha
+  const prefix = hash.slice(0, 5); // Pega os primeiros 5 caracteres do hash
+  const suffix = hash.slice(5).toUpperCase();
+
+  const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+  const data = await response.text();
+
+  return data.includes(suffix);
+}
+
+async function sha1(message) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -6,6 +25,13 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
   if (!username || !password) {
     showMessage('Por favor, preencha todos os campos.', 'error');
+    return;
+  }
+
+  // Verifica se a senha foi vazada
+  const isLeaked = await isPasswordLeaked(password);
+  if (isLeaked) {
+    showMessage('Esta senha foi vazada em violações de dados. Escolha uma senha mais segura.', 'error');
     return;
   }
 
