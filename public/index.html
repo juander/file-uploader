@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,6 +26,13 @@
     <h2 class="mt-5">Arquivos Disponíveis:</h2>
     <ul id="file-list" class="list-group"></ul>
   </div>
+  <script>
+    // Verifica se o usuário está logado
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = 'login.html'; // Redireciona para a página de login
+    }
+  </script>
   <script src="script.js"></script>
 </body>
 </html>

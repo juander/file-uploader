@@ -14,28 +14,33 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const SECRET_KEY = process.env.SECRET_KEY;
 
-app.use(helmet());
-app.use(cors());
-app.use(morgan('combined'));
-app.use(express.static('public'));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Middlewares
+app.use(helmet()); // Adiciona headers de segurança
+app.use(cors()); // Habilita CORS
+app.use(morgan('combined')); // Logs de requisições
+app.use(express.json()); // Interpreta o corpo das requisições como JSON
+app.use(express.static('public')); // Servir arquivos estáticos da pasta 'public'
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Servir arquivos da pasta 'uploads'
 
+// Rate Limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Limite de 100 requisições por IP
 });
 app.use(limiter);
 
+// Cria a pasta 'uploads' se não existir
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
+// Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    cb(null, `${Date.now()}-${file.originalname}`); // Adiciona um timestamp ao nome do arquivo
   },
 });
 
@@ -44,48 +49,57 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Tipo de arquivo não suportado!'));
+    cb(new Error('Tipo de arquivo não suportado!'), false);
   }
 };
 
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } }); // Limite de 5MB
 
+// Rota de Login
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
+
+  // Verificação básica das credenciais
   if (username === 'admin' && password === 'admin123') {
     const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
     res.json({ token });
   } else {
-    res.status(401).send('Credenciais inválidas');
+    res.status(401).json({ error: 'Credenciais inválidas' });
   }
 });
 
+// Middleware de Autenticação
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.status(401).send('Token não fornecido');
+  if (!token) return res.status(401).json({ error: 'Token não fornecido' });
 
   jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) return res.status(403).send('Token inválido');
+    if (err) return res.status(403).json({ error: 'Token inválido' });
     req.user = user;
     next();
   });
 };
 
+// Rota de Upload de Arquivo
 app.post('/upload', authenticateToken, upload.single('file'), (req, res) => {
-  res.send('Arquivo enviado com sucesso!');
+  if (!req.file) {
+    return res.status(400).json({ error: 'Nenhum arquivo enviado ou tipo de arquivo não suportado' });
+  }
+  res.json({ message: 'Arquivo enviado com sucesso!', file: req.file });
 });
 
+// Rota para Listar Arquivos
 app.get('/files', authenticateToken, (req, res) => {
   fs.readdir('uploads/', (err, files) => {
     if (err) {
-      res.status(500).send('Erro ao listar arquivos');
-    } else {
-      res.json(files);
+      return res.status(500).json({ error: 'Erro ao listar arquivos' });
     }
+    res.json(files);
   });
 });
 
+// Rota para Deletar Arquivo
 app.delete('/delete/:filename', authenticateToken, (req, res) => {
   const { filename } = req.params;
   const filePath = path.join(__dirname, 'uploads', filename);
@@ -93,12 +107,13 @@ app.delete('/delete/:filename', authenticateToken, (req, res) => {
   unlink(filePath, (err) => {
     if (err) {
       console.error(`Erro ao deletar arquivo ${filename}:`, err);
-      return res.status(500).send('Erro ao deletar o arquivo');
+      return res.status(500).json({ error: 'Erro ao deletar o arquivo' });
     }
-    res.send('Arquivo deletado com sucesso!');
+    res.json({ message: 'Arquivo deletado com sucesso!' });
   });
 });
 
+// Inicia o servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);

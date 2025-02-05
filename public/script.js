@@ -1,8 +1,17 @@
 document.getElementById('upload-form').addEventListener('submit', async (e) => {
     e.preventDefault();
   
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = 'login.html'; // Redireciona para a página de login
+      return;
+    }
+  
     const fileInput = document.getElementById('file-input');
-    if (!fileInput.files.length) return alert('Escolha um arquivo!');
+    if (!fileInput.files.length) {
+      showMessage('Escolha um arquivo antes de enviar!', 'error');
+      return;
+    }
   
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
@@ -11,7 +20,6 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     loading.classList.remove('d-none');
   
     try {
-      const token = localStorage.getItem('token'); // Obtenha o token do localStorage
       const response = await fetch('/upload', {
         method: 'POST',
         body: formData,
@@ -20,13 +28,18 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
         },
       });
   
-      const message = await response.text();
-      document.getElementById('message').innerText = message;
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || 'Erro ao enviar o arquivo');
+      }
   
+      const message = await response.text();
+      showMessage(message, 'success');
       fileInput.value = '';
-      loadFiles();
+      await loadFiles(); // Recarrega a lista de arquivos após o upload
     } catch (err) {
-      console.error(err);
+      console.error('Erro no upload:', err);
+      showMessage(err.message || 'Erro ao enviar o arquivo', 'error');
     } finally {
       loading.classList.add('d-none');
     }
@@ -37,15 +50,28 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     fileList.innerHTML = '';
   
     try {
-      const token = localStorage.getItem('token'); // Obtenha o token do localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showMessage('Token de autenticação não encontrado. Faça login novamente.', 'error');
+        return;
+      }
+  
       const response = await fetch('/files', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      if (!response.ok) throw new Error('Erro ao carregar arquivos');
+  
+      if (!response.ok) {
+        throw new Error('Erro ao carregar arquivos');
+      }
   
       const files = await response.json();
+  
+      if (files.length === 0) {
+        fileList.innerHTML = '<li class="list-group-item">Nenhum arquivo encontrado.</li>';
+        return;
+      }
   
       files.forEach(file => {
         const li = document.createElement('li');
@@ -67,11 +93,18 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
                 'Authorization': `Bearer ${token}`,
               },
             });
+  
+            if (!deleteResponse.ok) {
+              const errorMessage = await deleteResponse.text();
+              throw new Error(errorMessage || 'Erro ao excluir o arquivo');
+            }
+  
             const deleteMessage = await deleteResponse.text();
-            alert(deleteMessage);
-            loadFiles();
+            showMessage(deleteMessage, 'success');
+            await loadFiles(); // Recarrega a lista de arquivos após a exclusão
           } catch (err) {
             console.error('Erro ao excluir arquivo:', err);
+            showMessage(err.message || 'Erro ao excluir o arquivo', 'error');
           }
         });
   
@@ -81,7 +114,20 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
       });
     } catch (err) {
       console.error('Erro ao carregar a lista de arquivos:', err);
+      showMessage(err.message || 'Erro ao carregar a lista de arquivos', 'error');
     }
   }
   
+  function showMessage(message, type = 'info') {
+    const messageElement = document.getElementById('message');
+    messageElement.textContent = message;
+    messageElement.className = `alert alert-${type}`;
+    messageElement.style.display = 'block';
+  
+    setTimeout(() => {
+      messageElement.style.display = 'none';
+    }, 5000);
+  }
+  
+  // Carrega a lista de arquivos ao carregar a página
   loadFiles();
