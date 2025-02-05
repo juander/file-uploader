@@ -1,12 +1,18 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const helmet = require('helmet'); // Segurança
 
 const app = express();
 
 app.use(helmet());
 app.use(express.static('public'));
+
+// Certifique-se de que o diretório "uploads" existe
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads');
+}
 
 // Configuração do armazenamento
 const storage = multer.diskStorage({
@@ -36,9 +42,18 @@ app.post('/upload', upload.single('file'), (req, res) => {
 });
 
 app.get('/files', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
+  fs.readdir('uploads/', (err, files) => {
+    if (err) {
+      res.status(500).send('Erro ao listar arquivos');
+    } else {
+      res.json(files);
+    }
+  });
 });
 
-app.listen(3000, () => {
-  console.log('Servidor rodando em http://localhost:3000');
+// Porta dinâmica para compatibilidade com o Render
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
