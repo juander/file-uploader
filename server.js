@@ -8,6 +8,7 @@ const app = express();
 
 app.use(helmet());
 app.use(express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Certifique-se de que o diretório "uploads" existe
 if (!fs.existsSync('uploads')) {
