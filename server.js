@@ -3,7 +3,6 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { unlink } = require('fs');
 const helmet = require('helmet');
 const jwt = require('jsonwebtoken');
 const morgan = require('morgan');
@@ -12,7 +11,7 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
-// Verifica se a SECRET_KEY está definida
+// Verifica a SECRET_KEY
 const SECRET_KEY = process.env.SECRET_KEY;
 if (!SECRET_KEY) {
   console.error('Erro: SECRET_KEY não definida.');
@@ -20,75 +19,56 @@ if (!SECRET_KEY) {
 }
 
 // Middlewares
-app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']); // Configuração segura para o Render
-app.use(helmet());
-app.use(cors({
-    origin: 'https://file-uploader-t76a.onrender.com', 
-    methods: ['GET', 'POST', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true, // Permite cookies e cabeçalhos de autenticação
-  }));
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.static('public'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Limite de 100 requisições por IP
-});
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use(limiter);
 
-// Cria a pasta 'uploads' se não existir
+// Criação da pasta 'uploads'
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
-// Configuração do Multer para upload de arquivos
+// Configuração Multer
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`); // Adiciona um timestamp ao nome do arquivo
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+    allowed.includes(file.mimetype) 
+      ? cb(null, true) 
+      : cb(new Error('Tipo de arquivo não suportado!'));
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Tipo de arquivo não suportado!'), false);
-  }
-};
-
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } }); // Limite de 5MB
-
 // Rota de Login
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-  
-    console.log('Requisição de login recebida:', { username, password }); // Log da requisição
-  
-    // Verificação básica das credenciais (sem banco de dados)
-    if (username === 'admin' && password === 'admin123') {
-      const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
-      console.log('Login bem-sucedido. Token gerado:', token); // Log do token
-      res.json({ token });
-    } else {
-      console.log('Credenciais inválidas:', { username, password }); // Log de credenciais inválidas
-      res.status(401).json({ error: 'Credenciais inválidas' });
-    }
-  });
+  const { username, password } = req.body;
+  if (username === 'admin' && password === 'admin123') {
+    const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
+    return res.json({ token });
+  }
+  res.status(401).json({ error: 'Credenciais inválidas' });
+});
 
-// Middleware de Autenticação
+// Middleware de autenticação
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Token não fornecido' });
-
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token ausente ou mal formatado' });
+  }
+  const token = authHeader.split(' ')[1];
   jwt.verify(token, SECRET_KEY, (err, user) => {
     if (err) return res.status(403).json({ error: 'Token inválido' });
     req.user = user;
@@ -96,55 +76,35 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Rota de Upload de Arquivo
-app.post('/upload', authenticateToken, (req, res, next) => {
-    upload.single('file')(req, res, (err) => {
-      if (err) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({ error: 'O arquivo excede o limite de 5MB' });
-        }
-        if (err.message === 'Tipo de arquivo não suportado!') {
-          return res.status(400).json({ error: 'Tipo de arquivo não suportado' });
-        }
-        if (err.code === 'Unexpected field') {
-          return res.status(400).json({ error: 'O campo do arquivo deve ser chamado "file"' });
-        }
-        console.error('Erro no upload:', err); // Log do erro no console
-        return res.status(500).json({ error: 'Erro ao processar o arquivo' });
-      }
-      if (!req.file) {
-        return res.status(400).json({ error: 'Nenhum arquivo enviado' });
-      }
-      res.json({ message: 'Arquivo enviado com sucesso!', file: req.file });
-    });
-  });
-
-// Rota para Listar Arquivos
-app.get('/files', authenticateToken, (req, res) => {
-  fs.readdir('uploads/', (err, files) => {
+// Rota Upload
+app.post('/upload', authenticateToken, (req, res) => {
+  upload.single('file')(req, res, (err) => {
     if (err) {
-      return res.status(500).json({ error: 'Erro ao listar arquivos' });
+      if (err instanceof multer.MulterError || err.message) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(500).json({ error: 'Erro ao processar o upload' });
     }
-    res.json(files);
+    if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    res.json({ message: 'Upload realizado!', file: req.file });
   });
 });
 
-// Rota para Deletar Arquivo
+// Rota para deletar arquivo
 app.delete('/delete/:filename', authenticateToken, (req, res) => {
-  const { filename } = req.params;
-  const filePath = path.join(__dirname, 'uploads', filename);
-
-  unlink(filePath, (err) => {
-    if (err) {
-      console.error(`Erro ao deletar arquivo ${filename}:`, err);
-      return res.status(500).json({ error: 'Erro ao deletar o arquivo' });
-    }
+  const filePath = path.join(__dirname, 'uploads', req.params.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Arquivo não encontrado' });
+  }
+  fs.unlink(filePath, (err) => {
+    if (err) return res.status(500).json({ error: 'Erro ao deletar arquivo' });
     res.json({ message: 'Arquivo deletado com sucesso!' });
   });
 });
 
+// Rota não encontrada
+app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
+
 // Inicia o servidor
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

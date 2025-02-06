@@ -21,6 +21,14 @@ async function sha1(message) {
   return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+// Checa se o token existe no sessionStorage ao carregar a página
+(function checkToken() {
+  const token = sessionStorage.getItem('token');
+  if (!token) {
+    window.location.href = '/login.html'; // Redireciona para a página de login se não houver token
+  }
+})();
+
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -70,7 +78,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     console.log('Dados recebidos:', data);
 
     if (data.token) {
-      localStorage.setItem('token', data.token); // Armazena o token no localStorage
+      sessionStorage.setItem('token', data.token); // Armazena o token no sessionStorage
       console.log('Token armazenado:', data.token);
       window.location.href = '/index.html'; // Redireciona para a página inicial
     } else {
