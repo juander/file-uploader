@@ -1,12 +1,20 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-require('dotenv').config();
+const fs = require('fs'); // Necessário para verificar e criar o diretório
 
 const app = express();
-const port = process.env.PORT || 3000;  // Usando a porta do Render ou 3000 para desenvolvimento local
+const port = process.env.PORT || 3000; // Usa a porta configurada no Render ou 3000 localmente
+
+// Caminho para a pasta 'uploads'
+const uploadsDir = path.join(__dirname, 'uploads');
+
+// Verifica se a pasta 'uploads' existe, se não, cria
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
 
 app.use(cors());
 app.use(express.static('public'));
@@ -14,10 +22,10 @@ app.use(express.static('public'));
 // Configurar armazenamento de arquivos com Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadsDir); // Define o diretório de destino como 'uploads'
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    cb(null, `${Date.now()}-${file.originalname}`); // Nome do arquivo com timestamp
   }
 });
 
@@ -35,7 +43,7 @@ app.post('/upload', upload.array('file'), (req, res) => {
 
 // Rota para listar arquivos disponíveis
 app.get('/files', (req, res) => {
-  fs.readdir('uploads', (err, files) => {
+  fs.readdir(uploadsDir, (err, files) => {
     if (err) {
       return res.status(500).json({ message: 'Erro ao listar arquivos.' });
     }
@@ -46,7 +54,7 @@ app.get('/files', (req, res) => {
 // Rota para deletar arquivo
 app.delete('/delete/:filename', (req, res) => {
   const filename = req.params.filename;
-  fs.unlink(path.join('uploads', filename), (err) => {
+  fs.unlink(path.join(uploadsDir, filename), (err) => {
     if (err) {
       return res.status(500).json({ message: 'Erro ao excluir arquivo.' });
     }
@@ -56,5 +64,5 @@ app.delete('/delete/:filename', (req, res) => {
 
 // Inicia o servidor
 app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`); // Esta linha vai logar no console a URL de acesso
+  console.log(`Servidor rodando em http://localhost:${port}`);
 });
