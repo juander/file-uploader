@@ -26,8 +26,8 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
 
     const message = await response.text();
     showMessage(message, 'success');
-    fileInput.value = '';
-    await loadFiles();
+    fileInput.value = '';  // Limpa o campo de arquivo
+    await loadFiles();  // Recarrega a lista de arquivos
   } catch (err) {
     console.error('Erro no upload:', err);
     showMessage(err.message || 'Erro ao enviar o arquivo', 'error');
@@ -110,26 +110,32 @@ function showMessage(message, type = 'info') {
 // Função para permitir arrastar e soltar
 const dropArea = document.getElementById('drop-area');
 
+// Evita o comportamento padrão e destaca a área ao arrastar arquivos sobre ela
 dropArea.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropArea.classList.add('border-primary');
-  dropArea.classList.remove('border');
+  e.preventDefault();  // Impede o comportamento padrão de "abrir" o arquivo
+  dropArea.classList.add('border-primary');  // Destaca a área de arraste
+  dropArea.classList.remove('border');  // Remove a borda original
 });
 
+// Remove o destaque da borda quando o arquivo sai da área de arraste
 dropArea.addEventListener('dragleave', () => {
-  dropArea.classList.remove('border-primary');
-  dropArea.classList.add('border');
+  dropArea.classList.remove('border-primary');  // Remove o destaque da borda
+  dropArea.classList.add('border');  // Restaura a borda original
 });
 
+// Quando o arquivo for solto na área de arraste, faz o upload automaticamente
 dropArea.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropArea.classList.remove('border-primary');
-  dropArea.classList.add('border');
+  e.preventDefault();  // Impede o comportamento padrão (que pode causar refresh ou abrir o arquivo)
+  dropArea.classList.remove('border-primary');  // Remove o destaque da borda
+  dropArea.classList.add('border');  // Restaura a borda original
 
-  const files = e.dataTransfer.files;
-  if (files.length) {
-    document.getElementById('file-input').files = files;  // Define os arquivos na input
-    document.getElementById('upload-form').submit();  // Envia automaticamente ao soltar
+  const files = e.dataTransfer.files;  // Obtém os arquivos arrastados
+
+  if (files.length > 0) {
+    const fileInput = document.getElementById('file-input');
+    fileInput.files = files;  // Define os arquivos no input
+
+    document.getElementById('upload-form').submit();  // Submete o formulário automaticamente
   }
 });
 
