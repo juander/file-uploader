@@ -19,7 +19,7 @@
     </form>
     <div id="loading" class="text-center d-none">
       <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Carregando...</span>
+        <span class="visualmente-hidden">Carregando...</span>
       </div>
     </div>
     <div id="message" class="mt-3 text-center"></div>
@@ -30,16 +30,8 @@
     // Verifica se o usuário está logado
     document.addEventListener('DOMContentLoaded', () => {
       const token = sessionStorage.getItem('token'); // Verifica o token no sessionStorage
-      console.log('Token recuperado:', token); // Log do token recuperado
       if (!token) {
         window.location.href = 'login.html'; // Redireciona para a página de login se o token não existir
-      }
-    });
-
-    // Remove o token ao fechar a aba
-    window.addEventListener('pagehide', (e) => {
-      if (!e.persisted) {
-        sessionStorage.removeItem('token'); // Remove o token apenas ao fechar a aba
       }
     });
 

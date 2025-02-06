@@ -28,7 +28,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       try {
         const token = sessionStorage.getItem('token');
-        if (token && document.referrer.indexOf('login.html') === -1) {
+        if (token) {
           window.location.href = 'index.html';
         }
       } catch (error) {

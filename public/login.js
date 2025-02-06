@@ -43,13 +43,6 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   loginButton.textContent = 'Carregando...';
 
   try {
-    const isLeaked = false;
-
-    if (isLeaked) {
-      showMessage('Esta senha foi vazada em violações de dados. Escolha uma senha mais segura.', 'error');
-      return;
-    }
-
     const response = await fetch('/login', {
       method: 'POST',
       headers: {
