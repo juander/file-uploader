@@ -1,10 +1,12 @@
 async function isPasswordLeaked(password) {
-  const hash = await sha1(password);
-  const prefix = hash.slice(0, 5);
-  const suffix = hash.slice(5).toUpperCase();
-
   try {
+    const hash = await sha1(password);
+    const prefix = hash.slice(0, 5);
+    const suffix = hash.slice(5).toUpperCase();
+
     const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+    if (!response.ok) throw new Error('Erro ao consultar API de senha vazada');
+
     const data = await response.text();
     return data.includes(suffix);
   } catch (error) {
@@ -14,6 +16,10 @@ async function isPasswordLeaked(password) {
 }
 
 async function sha1(message) {
+  if (!window.crypto || !crypto.subtle) {
+    throw new Error('A API de criptografia não é suportada pelo navegador');
+  }
+
   const encoder = new TextEncoder();
   const data = encoder.encode(message);
   const hashBuffer = await crypto.subtle.digest('SHA-1', data);
