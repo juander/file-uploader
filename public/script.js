@@ -20,13 +20,13 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     });
 
     if (!response.ok) {
-      const errorMessage = await response.json();  // Alterado para .json() para tratar a resposta como JSON
-      throw new Error(errorMessage.message || 'Erro ao enviar o arquivo. Tente novamente mais tarde.');
+      const errorMessage = await response.text();
+      throw new Error(errorMessage || 'Erro ao enviar o arquivo. Tente novamente mais tarde.');
     }
 
-    const data = await response.json();  // Alterado para .json()
-    showMessage(data.message, 'success');  // Exibe a mensagem retornada pelo backend
-    fileInput.value = '';  // Limpa o input de arquivo
+    const message = await response.text();
+    showMessage(message, 'success');
+    fileInput.value = '';
     await loadFiles();
   } catch (err) {
     console.error('Erro no upload:', err);
@@ -73,12 +73,12 @@ async function loadFiles() {
           });
 
           if (!deleteResponse.ok) {
-            const errorMessage = await deleteResponse.json();  // Alterado para .json() para tratar a resposta como JSON
-            throw new Error(errorMessage.message || 'Erro ao excluir o arquivo');
+            const errorMessage = await deleteResponse.text();
+            throw new Error(errorMessage || 'Erro ao excluir o arquivo');
           }
 
-          const deleteMessage = await deleteResponse.json();  // Alterado para .json()
-          showMessage(deleteMessage.message, 'success');  // Exibe a mensagem de exclusão
+          const deleteMessage = await deleteResponse.text();
+          showMessage(deleteMessage, 'success');
           await loadFiles();
         } catch (err) {
           console.error('Erro ao excluir arquivo:', err);
@@ -106,6 +106,32 @@ function showMessage(message, type = 'info') {
     messageElement.style.display = 'none';
   }, 5000);
 }
+
+// Função para permitir arrastar e soltar
+const dropArea = document.getElementById('drop-area');
+
+dropArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropArea.classList.add('border-primary');
+  dropArea.classList.remove('border');
+});
+
+dropArea.addEventListener('dragleave', () => {
+  dropArea.classList.remove('border-primary');
+  dropArea.classList.add('border');
+});
+
+dropArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropArea.classList.remove('border-primary');
+  dropArea.classList.add('border');
+
+  const files = e.dataTransfer.files;
+  if (files.length) {
+    document.getElementById('file-input').files = files;  // Define os arquivos na input
+    document.getElementById('upload-form').submit();  // Envia automaticamente ao soltar
+  }
+});
 
 // Carrega a lista de arquivos ao carregar a página
 loadFiles();
