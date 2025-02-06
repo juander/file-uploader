@@ -1,11 +1,12 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+require('dotenv').config();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;  // Usando a porta do Render ou 3000 para desenvolvimento local
 
 app.use(cors());
 app.use(express.static('public'));
@@ -33,7 +34,6 @@ app.post('/upload', upload.array('file'), (req, res) => {
 });
 
 // Rota para listar arquivos disponíveis
-const fs = require('fs');
 app.get('/files', (req, res) => {
   fs.readdir('uploads', (err, files) => {
     if (err) {
@@ -44,7 +44,7 @@ app.get('/files', (req, res) => {
 });
 
 // Rota para deletar arquivo
-app.delete('/files/:filename', (req, res) => {
+app.delete('/delete/:filename', (req, res) => {
   const filename = req.params.filename;
   fs.unlink(path.join('uploads', filename), (err) => {
     if (err) {
@@ -56,5 +56,5 @@ app.delete('/files/:filename', (req, res) => {
 
 // Inicia o servidor
 app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+  console.log(`Servidor rodando em http://localhost:${port}`); // Esta linha vai logar no console a URL de acesso
 });

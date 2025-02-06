@@ -11,7 +11,8 @@
   <div class="container mt-5">
     <h1 class="text-center">Uploader de Arquivos</h1>
     <form id="upload-form" class="mt-4">
-      <div id="drop-area" class="border p-4 text-center mb-3">
+      <div id="drop-area" class="border p-4 text-center mb-3" 
+        ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
         <p>Arraste e solte arquivos aqui</p>
       </div>
       <input type="file" id="file-input" name="file" class="form-control mb-3" required multiple>
@@ -19,7 +20,7 @@
     </form>
     <div id="loading" class="text-center d-none">
       <div class="spinner-border text-primary" role="status">
-        <span class="visualmente-hidden">Carregando...</span>
+        <span class="visually-hidden">Carregando...</span>
       </div>
     </div>
     <div id="message" class="mt-3 text-center"></div>
@@ -27,5 +28,36 @@
     <ul id="file-list" class="list-group"></ul>
   </div>
   <script src="script.js"></script>
+
+  <script>
+    // Função para permitir o arrasto sobre a área
+    function handleDragOver(event) {
+      event.preventDefault(); // Impede o comportamento padrão (não abrir o arquivo)
+      event.stopPropagation();
+      document.getElementById('drop-area').classList.add('bg-light'); // Destaque ao arrastar
+    }
+
+    // Função para quando o arquivo for solto
+    function handleDrop(event) {
+      event.preventDefault(); // Impede o comportamento padrão (não abrir o arquivo)
+      event.stopPropagation();
+
+      const files = event.dataTransfer.files;
+      const fileInput = document.getElementById('file-input');
+      // Atribui os arquivos ao input de arquivo
+      fileInput.files = files;
+
+      // Exibir nome do arquivo para o usuário, se necessário
+      const fileName = files[0].name;
+      console.log(`Arquivo ${fileName} adicionado para upload.`);
+    }
+
+    // Função para destacar área de arrasto ao sair do arquivo
+    function handleDragLeave(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById('drop-area').classList.remove('bg-light'); // Remove o destaque
+    }
+  </script>
 </body>
 </html>
